@@ -14,11 +14,11 @@ module.exports = function wrap(gen, co) {
       if (isParam) {
         callNextRoute = res;
       }
-      return fn(err, req, res, next).catch(callNextRoute);
+      return fn(err, req, res, next).catch(e => setImmediate(() => callNextRoute(e)));
     }
   }
 
   return function(req, res, next) {
-    return fn(req, res, next).catch(next);
+    return fn(req, res, next).catch(e => setImmediate(() => next(e)));
   };
 };
