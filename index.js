@@ -14,11 +14,17 @@ module.exports = function wrap(gen, co) {
       if (isParam) {
         callNextRoute = res;
       }
-      return fn(err, req, res, next).catch(e => setImmediate(() => callNextRoute(e)));
+      return fn(err, req, res, next).catch(e => setImmediate(() => {
+	    if(callNextRoute.called) callNextRoute.called = false; // Prevent issue with Restify's once(next)
+	    callNextRoute(e);
+	  }));
     }
   }
 
   return function(req, res, next) {
-    return fn(req, res, next).catch(e => setImmediate(() => next(e)));
+    return fn(req, res, next).catch(e => setImmediate(() => {
+	  if(next.called) next.called = false; // Prevent issue with Restify's once(next)
+	  next(e);
+	}));
   };
 };
