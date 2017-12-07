@@ -2,6 +2,10 @@ try {
   var defaultCo = require('co');
 } catch (err) {}
 
+function ensureError(e) {
+	return (typeof e == 'object' && e instanceof Error) ? e : new Error(JSON.stringify(e));
+}
+
 module.exports = function wrap(gen, co) {
   if (!co) co = defaultCo.wrap;
 
@@ -16,7 +20,7 @@ module.exports = function wrap(gen, co) {
       }
       return fn(err, req, res, next).catch(e => setImmediate(() => {
 	    if(callNextRoute.called) callNextRoute.called = false; // Prevent issue with Restify's once(next)
-	    callNextRoute(e);
+	    callNextRoute(ensureError(e));
 	  }));
     }
   }
@@ -24,7 +28,7 @@ module.exports = function wrap(gen, co) {
   return function(req, res, next) {
     return fn(req, res, next).catch(e => setImmediate(() => {
 	  if(next.called) next.called = false; // Prevent issue with Restify's once(next)
-	  next(e);
+	  next(ensureError(e));
 	}));
   };
 };
